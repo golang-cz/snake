@@ -1,48 +1,77 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Chat } from './rpc';
+	//import { Snake } from './rpc.gen';
 
 	let canvas: HTMLCanvasElement;
 	let ctx: CanvasRenderingContext2D;
 
-	const api = new Chat('http://localhost:5174', fetch);
+	//const api = new Snake('http://localhost:5174', fetch);
 
-	//Mock data
-	let snake = [
-		{ x: 0, y: 0 },
-		{ x: 1, y: 0 },
-		{ x: 2, y: 0 },
-		{ x: 3, y: 0 },
-		{ x: 4, y: 0 }
-	];
-
-	let food = [{ x: 10, y: 10 }];
+	// Mock data
+	let state = {
+		snakes: [
+			{
+				id: 1,
+				color: 'blue',
+				body: [
+					{ x: 10, y: 20 },
+					{ x: 10, y: 21 },
+					{ x: 11, y: 21 },
+					{ x: 12, y: 21 },
+					{ x: 13, y: 21 },
+					{ x: 14, y: 21 }
+				],
+				direction: 'up'
+			},
+			{
+				id: 1,
+				color: 'green',
+				body: [
+					{ x: 50, y: 41 },
+					{ x: 50, y: 42 },
+					{ x: 50, y: 43 },
+					{ x: 50, y: 44 }
+				],
+				direction: 'down'
+			}
+		],
+		items: [
+			{
+				id: 1,
+				color: 'red',
+				body: [{ x: 10, y: 10 }]
+			}
+		]
+	};
 
 	const width = 70;
 	const height = 70;
 
-	//Constants
+	// Constants
 	const cellSize = 10;
 	const pxHeight = `${width * cellSize}px`;
 	const pxWidth = `${height * cellSize}px`;
 
-	function drawSnake() {
-		for (let i = 0; i < snake.length; i++) {
-			drawSquare(snake[i].x, snake[i].y, 'green');
-		}
+	function drawSnakes() {
+		state.snakes.forEach((snake) => {
+			for (let i = 0; i < snake.body.length; i++) {
+				drawSquare(snake.body[i].x, snake.body[i].y, snake.color);
+			}
+		});
 	}
-	function drawFood() {
-		for (let i = 0; i < food.length; i++) {
-			drawSquare(food[i].x, food[i].y, 'red');
-		}
+	function drawItems() {
+		state.items.forEach((item) => {
+			for (let i = 0; i < item.body.length; i++) {
+				drawSquare(item.body[i].x, item.body[i].y, item.color);
+			}
+		});
 	}
 	function drawSquare(x: number, y: number, color: string) {
 		ctx.fillStyle = color;
 		ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
 	}
 
-	// api.streamSnake(
-	// 	{},
+	// api.joinGame(
 	// 	{
 	// 		onMessage: (msg) => {
 	// 			console.log(snake);
@@ -74,8 +103,8 @@
 
 		ctx.beginPath();
 		drawGrid();
-		drawSnake();
-		drawFood();
+		drawSnakes();
+		drawItems();
 	});
 </script>
 
