@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SnakeGame, WebrpcError, type JoinGameReturn, type State } from '$lib/rpc.gen';
+	import { SnakeGame, WebrpcError, type JoinGameReturn, type State, Direction } from '$lib/rpc.gen';
 	import { onMount } from 'svelte';
 
 	let canvas: HTMLCanvasElement;
@@ -32,6 +32,8 @@
 		ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
 	}
 
+	let id: number;
+
 	onMount(async () => {
 		ctx = canvas.getContext('2d')!;
 		canvas.focus();
@@ -55,6 +57,12 @@
 		}
 
 		ctx.beginPath();
+
+		let resp = await api.createSnake({
+			username: 'test'
+		});
+
+		id = resp.snakeId;
 
 		api.joinGame({
 			onMessage: (resp: JoinGameReturn) => {
@@ -80,7 +88,24 @@
 			}
 		});
 	});
+
+	const arrowMap: Record<string, Direction> = {
+		ArrowUp: Direction.up,
+		ArrowDown: Direction.down,
+		ArrowLeft: Direction.left,
+		ArrowRight: Direction.right
+	};
+
+	const handleKeyDown = (e: KeyboardEvent) => {
+		const key = e.key;
+		if (key in arrowMap) {
+			e.preventDefault();
+			api.turnSnake({ snakeId: id, direction: arrowMap[key] });
+		}
+	};
 </script>
+
+<svelte:window on:keydown={handleKeyDown} />
 
 <div class="wrapper">
 	<canvas tabindex="1" bind:this={canvas} height={pxHeight} width={pxWidth}></canvas>
