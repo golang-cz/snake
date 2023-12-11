@@ -1,48 +1,14 @@
 <script lang="ts">
+	import { SnakeGame, WebrpcError, type JoinGameReturn, type State } from '$lib/rpc.gen';
 	import { onMount } from 'svelte';
-	//import { Snake } from './rpc.gen';
 
 	let canvas: HTMLCanvasElement;
 	let ctx: CanvasRenderingContext2D;
 
-	//const api = new Snake('http://localhost:5174', fetch);
+	const api = new SnakeGame('http://localhost:5252', fetch);
 
 	// Mock data
-	let state = {
-		snakes: [
-			{
-				id: 1,
-				color: 'blue',
-				body: [
-					{ x: 10, y: 20 },
-					{ x: 10, y: 21 },
-					{ x: 11, y: 21 },
-					{ x: 12, y: 21 },
-					{ x: 13, y: 21 },
-					{ x: 14, y: 21 }
-				],
-				direction: 'up'
-			},
-			{
-				id: 1,
-				color: 'green',
-				body: [
-					{ x: 50, y: 41 },
-					{ x: 50, y: 42 },
-					{ x: 50, y: 43 },
-					{ x: 50, y: 44 }
-				],
-				direction: 'down'
-			}
-		],
-		items: [
-			{
-				id: 1,
-				color: 'red',
-				body: [{ x: 10, y: 10 }]
-			}
-		]
-	};
+	let state: State = { snakes: [], items: [] };
 
 	const width = 70;
 	const height = 70;
@@ -71,14 +37,6 @@
 		ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
 	}
 
-	// api.joinGame(
-	// 	{
-	// 		onMessage: (msg) => {
-	// 			console.log(snake);
-	// 		}
-	// 	}
-	// );
-
 	onMount(async () => {
 		ctx = canvas.getContext('2d')!;
 		canvas.focus();
@@ -103,8 +61,25 @@
 
 		ctx.beginPath();
 		drawGrid();
-		drawSnakes();
-		drawItems();
+
+		api.joinGame({
+			onMessage: (resp: JoinGameReturn) => {
+				state = resp.state;
+
+				drawSnakes();
+				drawItems();
+
+				console.log(resp);
+			},
+			onError: (error: WebrpcError) => {
+				console.error('onError()', error);
+				if (error.message == 'AbortError') {
+					//log.value = [...log.value, { type: 'warn', log: 'Connection closed by abort signal' }];
+				} else {
+					//log.value = [...log.value, { type: 'error', log: String(error) }];
+				}
+			}
+		});
 	});
 </script>
 

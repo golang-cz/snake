@@ -3,7 +3,7 @@ all:
 
 generate:
 	webrpc-gen -schema=proto/snake.ridl -target=../../gen-golang -pkg=proto -server -client -fmt=false -out=proto/snake.gen.go
-	#webrpc-gen -schema=proto/snake.ridl -target=../../gen-typescript -client -out=webapp/src/rpc.gen.ts
+	webrpc-gen -schema=proto/snake.ridl -target=../../gen-typescript -client -out=webapp/src/lib/rpc.gen.ts
 
 run:
 	go run ./
