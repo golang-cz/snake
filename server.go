@@ -7,11 +7,14 @@ import (
 )
 
 type Server struct {
-	mu        sync.Mutex
-	state     *proto.State
-	events    chan *proto.Event
-	subs      map[uint64]chan *proto.State
-	lastSubId uint64
+	mu     sync.Mutex
+	state  *proto.State
+	events chan *proto.Event
+	subs   map[uint64]chan *proto.State
+
+	lastSnakeId uint64
+	lastItemId  uint64
+	lastSubId   uint64
 }
 
 var (
@@ -23,13 +26,15 @@ var (
 
 func NewSnakeServer() *Server {
 	return &Server{
+		lastSnakeId: 2,
+		lastItemId:  5,
 		state: &proto.State{
 			Width:  70,
 			Height: 70,
-			Snakes: []*proto.Snake{
-				{
+			Snakes: map[uint64]*proto.Snake{
+				1: {
 					Id:    1,
-					Color: "blue",
+					Color: randColor(),
 					Body: []*proto.Square{
 						{X: 10, Y: 20},
 						{X: 10, Y: 21},
@@ -51,9 +56,9 @@ func NewSnakeServer() *Server {
 					},
 					Direction: &up,
 				},
-				{
+				2: {
 					Id:    2,
-					Color: "green",
+					Color: randColor(),
 					Body: []*proto.Square{
 						{X: 50, Y: 41},
 						{X: 50, Y: 42},
@@ -63,29 +68,29 @@ func NewSnakeServer() *Server {
 					Direction: &down,
 				},
 			},
-			Items: []*proto.Item{
-				{
+			Items: map[uint64]*proto.Item{
+				1: {
 					Id:    1,
 					Color: "red",
 					Body:  &proto.Square{X: 10, Y: 2},
 				},
-				{
+				2: {
 					Id:    2,
 					Color: "red",
-					Body:  &proto.Square{X: 24, Y: 32},
+					Body:  &proto.Square{X: 55, Y: 35},
 				},
-				{
+				3: {
 					Id:    3,
 					Color: "red",
 					Body:  &proto.Square{X: 50, Y: 49},
 				},
-				{
-					Id:    3,
+				4: {
+					Id:    4,
 					Color: "red",
 					Body:  &proto.Square{X: 50, Y: 51},
 				},
-				{
-					Id:    3,
+				5: {
+					Id:    5,
 					Color: "red",
 					Body:  &proto.Square{X: 50, Y: 53},
 				},

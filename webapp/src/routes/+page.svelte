@@ -16,14 +16,14 @@
 	const pxWidth = `${state.height * cellSize}px`;
 
 	function drawSnakes() {
-		state.snakes.forEach((snake) => {
+		Object.values(state.snakes).forEach((snake) => {
 			for (let i = 0; i < snake.body.length; i++) {
 				drawSquare(snake.body[i].x, snake.body[i].y, snake.color);
 			}
 		});
 	}
 	function drawItems() {
-		state.items.forEach((item) => {
+		Object.values(state.items).forEach((item) => {
 			drawSquare(item.body.x, item.body.y, item.color);
 		});
 	}
@@ -62,14 +62,14 @@
 				drawGrid();
 				drawSnakes();
 				drawItems();
-
-				console.log(resp);
 			},
 			onError: (error: WebrpcError) => {
 				// TODO: reconnect()
+				//if (error instanceof WebrpcStreamLostError) {
 				setInterval(() => {
 					location.reload();
-				}, 250);
+				}, 100);
+				//}
 
 				console.error('onError()', error);
 				if (error.message == 'AbortError') {

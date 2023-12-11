@@ -10,6 +10,10 @@ import (
 )
 
 func (s *Server) Run(ctx context.Context) error {
+	go s.generateFood()
+	go s.generatePlayers(3)
+	go s.generateSnakeTurns()
+
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -53,7 +57,7 @@ func (s *Server) gameTick() error {
 		for i, item := range s.state.Items {
 			if item.Body.X == newSquare.X && item.Body.Y == newSquare.Y {
 				eat = true
-				s.state.Items = append(s.state.Items[:i], s.state.Items[i+1:]...)
+				delete(s.state.Items, i)
 				break
 			}
 		}
