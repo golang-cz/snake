@@ -1,0 +1,42 @@
+webrpc = v1
+
+name = snake
+version = v1.0.0
+
+service SnakeGame
+  - JoinGame() => stream (state: State, event: Event)
+  - CreateSnake(username: string) => (snakeId: uint64)
+  - TurnSnake(snakeId: uint64, direction: Direction)
+
+struct State
+  - snakes: []Snake
+  - items: []Item
+
+struct Snake
+  - id: uint64
+  - color: string
+  - body: []Coord
+  - direction: Direction
+
+struct Item
+  - id: uint64
+  - color: string
+  - type: ItemType
+  - body: []Coord
+
+struct Event
+
+struct Coord
+  - x: uint
+  - y: uint
+
+enum Direction: uint
+  - left
+  - right
+  - up
+  - down
+
+enum ItemType: uint
+  - bite
+
+error 100 ErrorTODO "TODO" HTTP 400
