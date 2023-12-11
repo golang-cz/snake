@@ -8,7 +8,7 @@ import (
 	"github.com/golang-cz/snake/proto"
 )
 
-type GameServer struct {
+type Server struct {
 	mu        sync.Mutex
 	state     *proto.State
 	events    chan *proto.Event
@@ -16,15 +16,15 @@ type GameServer struct {
 	lastSubId uint64
 }
 
-func NewChatServer() *GameServer {
-	return &GameServer{
+func NewSnakeServer() *Server {
+	return &Server{
 		state:  &proto.State{},
 		events: make(chan *proto.Event, 100000),
 		subs:   map[uint64]chan *proto.State{},
 	}
 }
 
-func (s *GameServer) runGame(ctx context.Context) error {
+func (s *Server) runGame(ctx context.Context) error {
 	for event := range s.events {
 		select {
 		case <-ctx.Done():
@@ -40,7 +40,7 @@ func (s *GameServer) runGame(ctx context.Context) error {
 	return nil
 }
 
-func (s *GameServer) updateState(events ...*proto.Event) error {
+func (s *Server) updateState(events ...*proto.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -53,7 +53,7 @@ func (s *GameServer) updateState(events ...*proto.Event) error {
 }
 
 // TODO: We send the whole state on each update. Optimize to send events (diffs) only.
-func (s *GameServer) sendState(state *proto.State) error {
+func (s *Server) sendState(state *proto.State) error {
 	for _, sub := range s.subs {
 		sub := sub
 		go func() {
@@ -63,7 +63,7 @@ func (s *GameServer) sendState(state *proto.State) error {
 	return nil
 }
 
-func (s *GameServer) JoinGame(ctx context.Context, stream proto.JoinGameStreamWriter) error {
+func (s *Server) JoinGame(ctx context.Context, stream proto.JoinGameStreamWriter) error {
 	events := make(chan *proto.State, 10)
 
 	state, subscriptionId := s.subscribe(events)
@@ -93,15 +93,15 @@ func (s *GameServer) JoinGame(ctx context.Context, stream proto.JoinGameStreamWr
 	}
 }
 
-func (s *GameServer) CreateSnake(ctx context.Context, username string) (uint64, error) {
+func (s *Server) CreateSnake(ctx context.Context, username string) (uint64, error) {
 	return 0, nil
 }
 
-func (s *GameServer) TurnSnake(ctx context.Context, snakeId uint64, direction *proto.Direction) error {
+func (s *Server) TurnSnake(ctx context.Context, snakeId uint64, direction *proto.Direction) error {
 	return nil
 }
 
-func (s *GameServer) subscribe(c chan *proto.State) (*proto.State, uint64) {
+func (s *Server) subscribe(c chan *proto.State) (*proto.State, uint64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -112,7 +112,7 @@ func (s *GameServer) subscribe(c chan *proto.State) (*proto.State, uint64) {
 	return s.state, id
 }
 
-func (s *GameServer) unsubscribe(subscriptionId uint64) {
+func (s *Server) unsubscribe(subscriptionId uint64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -14,13 +14,11 @@ import (
 	"github.com/golang-cz/snake/proto"
 )
 
-//go:generate go run ../../cmd/webrpc-gen -schema=proto/chat.ridl -target=../../gen-golang -pkg=proto -server -client -out=proto/chat.gen.go
-
 func main() {
-	port := 4848
+	port := 5252
 	slog.Info(fmt.Sprintf("serving at http://localhost:%v", port))
 
-	rpc := NewChatServer()
+	rpc := NewSnakeServer()
 
 	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", port), rpc.Router())
 	if err != nil {
@@ -28,7 +26,7 @@ func main() {
 	}
 }
 
-func (s *GameServer) Router() http.Handler {
+func (s *Server) Router() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(requestDebugger)
