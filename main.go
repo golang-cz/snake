@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -19,6 +20,7 @@ func main() {
 	slog.Info(fmt.Sprintf("serving at http://localhost:%v", port))
 
 	rpc := NewSnakeServer()
+	go rpc.Run(context.TODO())
 
 	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", port), rpc.Router())
 	if err != nil {

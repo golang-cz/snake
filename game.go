@@ -3,11 +3,72 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/golang-cz/snake/proto"
 )
 
-func (s *Server) runGame(ctx context.Context) error {
+func (s *Server) Run(ctx context.Context) error {
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := s.gameTick(); err != nil {
+				return fmt.Errorf("advancing the game: %w", err)
+			}
+		}
+	}
+}
+
+func (s *Server) gameTick() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Move snakes.
+	for _, snake := range s.state.Snakes {
+		newSquare := &proto.Square{}
+
+		switch snake.Direction {
+		case &up:
+			newSquare.X = snake.Body[0].X
+			newSquare.Y = min(snake.Body[0].Y-1, s.state.Height)
+		case &down:
+			newSquare.X = snake.Body[0].X
+			newSquare.Y = min(snake.Body[0].Y+1) % s.state.Height
+		case &left:
+			newSquare.X = min(snake.Body[0].X-1, s.state.Width)
+			newSquare.Y = snake.Body[0].Y
+		case &right:
+			newSquare.X = min(snake.Body[0].X+1) % s.state.Width
+			newSquare.Y = snake.Body[0].Y
+		}
+
+		log.Print("%#v", newSquare)
+
+		// Look through items.. TODO: map[Square]*Item?
+		eat := false
+		for i, item := range s.state.Items {
+			if item.Body.X == newSquare.X && item.Body.Y == newSquare.Y {
+				eat = true
+				s.state.Items = append(s.state.Items[:i], s.state.Items[i+1:]...)
+				break
+			}
+		}
+
+		if eat {
+			snake.Body = append([]*proto.Square{newSquare}, snake.Body...)
+		} else {
+			snake.Body = append([]*proto.Square{newSquare}, snake.Body[:len(snake.Body)-1]...)
+		}
+	}
+
+	return s.sendState(s.state)
+}
+
+func (s *Server) eventLoop(ctx context.Context) error {
 	for event := range s.events {
 		select {
 		case <-ctx.Done():

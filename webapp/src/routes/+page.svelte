@@ -8,15 +8,12 @@
 	const api = new SnakeGame('http://localhost:5252', fetch);
 
 	// Mock data
-	let state: State = { snakes: [], items: [] };
-
-	const width = 70;
-	const height = 70;
+	let state: State = { width: 70, height: 70, snakes: [], items: [] };
 
 	// Constants
 	const cellSize = 10;
-	const pxHeight = `${width * cellSize}px`;
-	const pxWidth = `${height * cellSize}px`;
+	const pxHeight = `${state.width * cellSize}px`;
+	const pxWidth = `${state.height * cellSize}px`;
 
 	function drawSnakes() {
 		state.snakes.forEach((snake) => {
@@ -27,9 +24,7 @@
 	}
 	function drawItems() {
 		state.items.forEach((item) => {
-			for (let i = 0; i < item.body.length; i++) {
-				drawSquare(item.body[i].x, item.body[i].y, item.color);
-			}
+			drawSquare(item.body.x, item.body.y, item.color);
 		});
 	}
 	function drawSquare(x: number, y: number, color: string) {
@@ -60,18 +55,22 @@
 		}
 
 		ctx.beginPath();
-		drawGrid();
 
 		api.joinGame({
 			onMessage: (resp: JoinGameReturn) => {
 				state = resp.state;
-
+				drawGrid();
 				drawSnakes();
 				drawItems();
 
 				console.log(resp);
 			},
 			onError: (error: WebrpcError) => {
+				// TODO: reconnect()
+				setInterval(() => {
+					location.reload();
+				}, 250);
+
 				console.error('onError()', error);
 				if (error.message == 'AbortError') {
 					//log.value = [...log.value, { type: 'warn', log: 'Connection closed by abort signal' }];

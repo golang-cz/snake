@@ -9,24 +9,26 @@ service SnakeGame
   - TurnSnake(snakeId: uint64, direction: Direction)
 
 struct State
+  - width: uint
+  - height: uint
   - snakes: []Snake
   - items: []Item
 
 struct Snake
   - id: uint64
   - color: string
-  - body: []Coord
+  - body: []Square
   - direction: Direction
 
 struct Item
   - id: uint64
   - color: string
   - type: ItemType
-  - body: []Coord
+  - body: Square
 
 struct Event
 
-struct Coord
+struct Square
   - x: uint
   - y: uint
 
