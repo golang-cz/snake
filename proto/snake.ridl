@@ -20,6 +20,9 @@ struct Snake
   - color: string
   - body: []Square
   - direction: Direction
+  - length: int
+  - bornAt: timestamp
+  - diedAt: timestamp
 
 struct Item
   - id: uint64
@@ -42,4 +45,5 @@ enum Direction: uint
 enum ItemType: uint
   - bite
 
-error 100 ErrorTODO "TODO" HTTP 400
+error 100 SnakeNotFound "Snake not found." HTTP 400
+error 101 InvalidTurn "Can't reverse direction." HTTP 400

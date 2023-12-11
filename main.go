@@ -30,7 +30,7 @@ func (s *Server) Router() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(requestDebugger)
-	r.Use(middleware.Recoverer)
+	//r.Use(middleware.Recoverer)
 
 	cors := cors.New(cors.Options{
 		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts

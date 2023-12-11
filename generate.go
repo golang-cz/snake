@@ -30,19 +30,23 @@ func (s *Server) generateFood() {
 }
 
 func (s *Server) generatePlayers(num int) {
+	return
 	// Simulate new players joining the game.
 	for i := 0; i < num; i++ {
 		<-time.After(3 * time.Second)
-		s.CreateSnake(context.Background(), "username")
+		s.CreateSnake(context.Background(), "AI")
 	}
 }
 
 func (s *Server) generateSnakeTurns() {
 	// Simulate players turning.
 	for {
-		<-time.After(100 * time.Millisecond)
 		if snake, ok := s.state.Snakes[uint64(rand.Int63n(int64(s.lastSnakeId)))]; ok {
+			if snake.Name != "AI" {
+				continue
+			}
 			s.TurnSnake(context.Background(), snake.Id, randDirection())
 		}
+		<-time.After(100 * time.Millisecond)
 	}
 }

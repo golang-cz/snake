@@ -42,8 +42,12 @@ func (s *Server) CreateSnake(ctx context.Context, username string) (uint64, erro
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.state.Snakes[s.lastSnakeId] = &proto.Snake{
-		Id:    s.lastSnakeId,
+	s.lastSnakeId++
+
+	snakeId := s.lastSnakeId
+	s.state.Snakes[snakeId] = &proto.Snake{
+		Id:    snakeId,
+		Name:  username,
 		Color: randColor(),
 		Body: []*proto.Square{
 			{X: 34, Y: 35},
@@ -52,9 +56,8 @@ func (s *Server) CreateSnake(ctx context.Context, username string) (uint64, erro
 		},
 		Direction: &right,
 	}
-	s.lastSnakeId++
 
-	return s.lastSnakeId, nil
+	return snakeId, nil
 }
 
 func (s *Server) TurnSnake(ctx context.Context, snakeId uint64, direction *proto.Direction) error {
@@ -65,21 +68,24 @@ func (s *Server) TurnSnake(ctx context.Context, snakeId uint64, direction *proto
 		return fmt.Errorf("nil direction")
 	}
 
-	if snake, ok := s.state.Snakes[snakeId]; ok {
-		// Disallow back turns.
-		switch {
-		case snake.Direction == &up && direction == &down:
-			return nil
-		case snake.Direction == &down && direction == &up:
-			return nil
-		case snake.Direction == &left && direction == &right:
-			return nil
-		case snake.Direction == &right && direction == &left:
-			return nil
-		}
-
-		snake.Direction = direction
+	snake, ok := s.state.Snakes[snakeId]
+	if !ok {
+		return proto.ErrSnakeNotFound.WithCause(fmt.Errorf("snakeId %v not found", snakeId))
 	}
+
+	// Disallow back turns.
+	switch {
+	case *snake.Direction == proto.Direction_up && *direction == proto.Direction_down:
+		return proto.ErrInvalidTurn
+	case *snake.Direction == proto.Direction_down && *direction == proto.Direction_up:
+		return proto.ErrInvalidTurn
+	case *snake.Direction == proto.Direction_left && *direction == proto.Direction_right:
+		return proto.ErrInvalidTurn
+	case *snake.Direction == proto.Direction_right && *direction == proto.Direction_left:
+		return proto.ErrInvalidTurn
+	}
+
+	snake.Direction = direction
 
 	return nil
 }

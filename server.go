@@ -26,7 +26,7 @@ var (
 
 func NewSnakeServer() *Server {
 	return &Server{
-		lastSnakeId: 2,
+		lastSnakeId: 3,
 		lastItemId:  5,
 		state: &proto.State{
 			Width:  70,
@@ -34,6 +34,7 @@ func NewSnakeServer() *Server {
 			Snakes: map[uint64]*proto.Snake{
 				1: {
 					Id:    1,
+					Name:  "AI",
 					Color: randColor(),
 					Body: []*proto.Square{
 						{X: 10, Y: 20},
@@ -58,6 +59,7 @@ func NewSnakeServer() *Server {
 				},
 				2: {
 					Id:    2,
+					Name:  "AI",
 					Color: randColor(),
 					Body: []*proto.Square{
 						{X: 50, Y: 41},

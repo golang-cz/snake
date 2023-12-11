@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/golang-cz/snake/proto"
@@ -31,26 +30,51 @@ func (s *Server) gameTick() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// snakeGrid := make([][]*proto.Snake, s.state.Width)
+	// for x := range snakeGrid {
+	// 	snakeGrid[x] = make([]*proto.Snake, s.state.Height)
+	// }
+	// for _, snake := range s.state.Snakes {
+	// 	for _, square := range snake.Body {
+	// 		snakeGrid[square.X][square.Y] = snake
+	// 	}
+	// }
+
+	//	snakeGrid := make([][]*proto.Snake, s.state.Width)
+	// for x := range snakeGrid {
+	// 	snakeGrid[x] = make([]*proto.Snake, s.state.Height)
+	// }
+	// for _, snake := range s.state.Snakes {
+	// 	for _, square := range snake.Body {
+	// 		snakeGrid[square.X][square.Y] = snake
+	// 	}
+	// }
+	// for _, item := range s.state.Items {
+	// 	itemGrid[item.Body.X][item.Body.Y] = item
+	// }
+
 	// Move snakes.
 	for _, snake := range s.state.Snakes {
 		newSquare := &proto.Square{}
 
-		switch snake.Direction {
-		case &up:
+		switch *snake.Direction {
+		case proto.Direction_up:
 			newSquare.X = snake.Body[0].X
-			newSquare.Y = min(snake.Body[0].Y-1, s.state.Height)
-		case &down:
+			newSquare.Y = min(snake.Body[0].Y-1, s.state.Height-1)
+		case proto.Direction_down:
 			newSquare.X = snake.Body[0].X
 			newSquare.Y = min(snake.Body[0].Y+1) % s.state.Height
-		case &left:
-			newSquare.X = min(snake.Body[0].X-1, s.state.Width)
+		case proto.Direction_left:
+			newSquare.X = min(snake.Body[0].X-1, s.state.Width-1)
 			newSquare.Y = snake.Body[0].Y
-		case &right:
+		case proto.Direction_right:
 			newSquare.X = min(snake.Body[0].X+1) % s.state.Width
 			newSquare.Y = snake.Body[0].Y
+		default:
+			panic(snake.Direction)
 		}
 
-		log.Print("%#v", newSquare)
+		//log.Print("%#v", newSquare)
 
 		// Look through items.. TODO: map[Square]*Item?
 		eat := false
