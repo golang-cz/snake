@@ -13,7 +13,7 @@ func (s *Server) Run(ctx context.Context) error {
 	go s.generatePlayers(3)
 	go s.generateSnakeTurns()
 
-	ticker := time.NewTicker(100 * time.Millisecond)
+	ticker := time.NewTicker(50 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
@@ -24,6 +24,8 @@ func (s *Server) Run(ctx context.Context) error {
 			}
 		}
 	}
+
+	return nil
 }
 
 func (s *Server) gameTick() error {
@@ -57,6 +59,11 @@ func (s *Server) gameTick() error {
 	for _, snake := range s.state.Snakes {
 		newSquare := &proto.Square{}
 
+		if len(snake.NextDirections) > 0 {
+			snake.Direction = snake.NextDirections[0]
+			snake.NextDirections = snake.NextDirections[1:]
+		}
+
 		switch *snake.Direction {
 		case proto.Direction_up:
 			newSquare.X = snake.Body[0].X
@@ -70,11 +77,7 @@ func (s *Server) gameTick() error {
 		case proto.Direction_right:
 			newSquare.X = min(snake.Body[0].X+1) % s.state.Width
 			newSquare.Y = snake.Body[0].Y
-		default:
-			panic(snake.Direction)
 		}
-
-		//log.Print("%#v", newSquare)
 
 		// Look through items.. TODO: map[Square]*Item?
 		eat := false

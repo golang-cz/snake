@@ -50,9 +50,9 @@ func (s *Server) CreateSnake(ctx context.Context, username string) (uint64, erro
 		Name:  username,
 		Color: randColor(),
 		Body: []*proto.Square{
-			{X: 34, Y: 35},
-			{X: 35, Y: 35},
 			{X: 36, Y: 35},
+			{X: 35, Y: 35},
+			{X: 34, Y: 35},
 		},
 		Direction: &right,
 	}
@@ -73,19 +73,33 @@ func (s *Server) TurnSnake(ctx context.Context, snakeId uint64, direction *proto
 		return proto.ErrSnakeNotFound.WithCause(fmt.Errorf("snakeId %v not found", snakeId))
 	}
 
-	// Disallow back turns.
-	switch {
-	case *snake.Direction == proto.Direction_up && *direction == proto.Direction_down:
-		return proto.ErrInvalidTurn
-	case *snake.Direction == proto.Direction_down && *direction == proto.Direction_up:
-		return proto.ErrInvalidTurn
-	case *snake.Direction == proto.Direction_left && *direction == proto.Direction_right:
-		return proto.ErrInvalidTurn
-	case *snake.Direction == proto.Direction_right && *direction == proto.Direction_left:
+	lastDirection := *snake.Direction
+	if len(snake.NextDirections) > 0 {
+		lastDirection = *snake.NextDirections[len(snake.NextDirections)-1]
+	}
+
+	// Same direction.
+	if lastDirection == *direction {
 		return proto.ErrInvalidTurn
 	}
 
-	snake.Direction = direction
+	// Disallow turnabouts.
+	switch {
+	case lastDirection == proto.Direction_up && *direction == proto.Direction_down:
+		return proto.ErrInvalidTurn
+	case lastDirection == proto.Direction_down && *direction == proto.Direction_up:
+		return proto.ErrInvalidTurn
+	case lastDirection == proto.Direction_left && *direction == proto.Direction_right:
+		return proto.ErrInvalidTurn
+	case lastDirection == proto.Direction_right && *direction == proto.Direction_left:
+		return proto.ErrInvalidTurn
+	}
+
+	if len(snake.NextDirections) > 2 {
+		snake.NextDirections = append(snake.NextDirections[:2], direction)
+	} else {
+		snake.NextDirections = append(snake.NextDirections, direction)
+	}
 
 	return nil
 }
