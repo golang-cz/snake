@@ -10,10 +10,8 @@ import (
 
 func (s *Server) Run(ctx context.Context) error {
 	go s.generateFood()
-	go s.generatePlayers(3)
-	go s.generateSnakeTurns()
 
-	ticker := time.NewTicker(50 * time.Millisecond)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
@@ -24,36 +22,13 @@ func (s *Server) Run(ctx context.Context) error {
 			}
 		}
 	}
-
-	return nil
 }
 
 func (s *Server) gameTick() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// snakeGrid := make([][]*proto.Snake, s.state.Width)
-	// for x := range snakeGrid {
-	// 	snakeGrid[x] = make([]*proto.Snake, s.state.Height)
-	// }
-	// for _, snake := range s.state.Snakes {
-	// 	for _, square := range snake.Body {
-	// 		snakeGrid[square.X][square.Y] = snake
-	// 	}
-	// }
-
-	//	snakeGrid := make([][]*proto.Snake, s.state.Width)
-	// for x := range snakeGrid {
-	// 	snakeGrid[x] = make([]*proto.Snake, s.state.Height)
-	// }
-	// for _, snake := range s.state.Snakes {
-	// 	for _, square := range snake.Body {
-	// 		snakeGrid[square.X][square.Y] = snake
-	// 	}
-	// }
-	// for _, item := range s.state.Items {
-	// 	itemGrid[item.Body.X][item.Body.Y] = item
-	// }
+	s.generateSnakeTurns()
 
 	// Move snakes.
 	for _, snake := range s.state.Snakes {
@@ -97,34 +72,6 @@ func (s *Server) gameTick() error {
 	}
 
 	return s.sendState(s.state)
-}
-
-func (s *Server) eventLoop(ctx context.Context) error {
-	for event := range s.events {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		if err := s.updateState(event); err != nil {
-			return fmt.Errorf("updating state: %w", err)
-		}
-	}
-
-	return nil
-}
-
-func (s *Server) updateState(events ...*proto.Event) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// for _, event := range events {
-	// 	// switch event.Type {
-
-	// 	// }
-	// }
-	return nil
 }
 
 // TODO: We send the whole state on each update. Optimize to send events (diffs) only.

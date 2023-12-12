@@ -32,8 +32,8 @@ func NewSnakeServer() *Server {
 			Width:  70,
 			Height: 70,
 			Snakes: map[uint64]*proto.Snake{
-				1: {
-					Id:    1,
+				0: {
+					Id:    0,
 					Name:  "AI",
 					Color: randColor(),
 					Body: []*proto.Square{
@@ -57,20 +57,25 @@ func NewSnakeServer() *Server {
 					},
 					Direction: &up,
 				},
-				2: {
-					Id:    2,
+				1: {
+					Id:    1,
 					Name:  "AI",
 					Color: randColor(),
 					Body: []*proto.Square{
-						{X: 50, Y: 41},
-						{X: 50, Y: 42},
-						{X: 50, Y: 43},
 						{X: 50, Y: 44},
+						{X: 50, Y: 43},
+						{X: 50, Y: 42},
+						{X: 50, Y: 41},
 					},
 					Direction: &down,
 				},
 			},
 			Items: map[uint64]*proto.Item{
+				0: {
+					Id:    0,
+					Color: "red",
+					Body:  &proto.Square{X: 40, Y: 66},
+				},
 				1: {
 					Id:    1,
 					Color: "red",

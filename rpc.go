@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"math/rand"
 
 	"github.com/golang-cz/snake/proto"
 )
@@ -61,55 +60,18 @@ func (s *Server) CreateSnake(ctx context.Context, username string) (uint64, erro
 }
 
 func (s *Server) TurnSnake(ctx context.Context, snakeId uint64, direction *proto.Direction) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if direction == nil {
 		return fmt.Errorf("nil direction")
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	snake, ok := s.state.Snakes[snakeId]
 	if !ok {
 		return proto.ErrSnakeNotFound.WithCause(fmt.Errorf("snakeId %v not found", snakeId))
 	}
 
-	lastDirection := *snake.Direction
-	if len(snake.NextDirections) > 0 {
-		lastDirection = *snake.NextDirections[len(snake.NextDirections)-1]
-	}
-
-	// Same direction.
-	if lastDirection == *direction {
-		return proto.ErrInvalidTurn
-	}
-
-	// Disallow turnabouts.
-	switch {
-	case lastDirection == proto.Direction_up && *direction == proto.Direction_down:
-		return proto.ErrInvalidTurn
-	case lastDirection == proto.Direction_down && *direction == proto.Direction_up:
-		return proto.ErrInvalidTurn
-	case lastDirection == proto.Direction_left && *direction == proto.Direction_right:
-		return proto.ErrInvalidTurn
-	case lastDirection == proto.Direction_right && *direction == proto.Direction_left:
-		return proto.ErrInvalidTurn
-	}
-
-	if len(snake.NextDirections) > 2 {
-		snake.NextDirections = append(snake.NextDirections[:2], direction)
-	} else {
-		snake.NextDirections = append(snake.NextDirections, direction)
-	}
-
-	return nil
-}
-
-func randColor() string {
-	colors := []string{"blue", "green", "lightgreen", "darkgreen", "lightblue", "darkblue", "pink", "brown", "yellow", "orange", "gray", "lightgray", "purple", "magenta", "black", "aqua"}
-	return colors[rand.Intn(len(colors))]
-}
-
-func randDirection() *proto.Direction {
-	directions := []*proto.Direction{&left, &up, &right, &down}
-	return directions[rand.Intn(len(directions))]
+	// Turn snake, if possible, and buffer up to 2 actions.
+	return turnSnake(snake, direction, 2)
 }
