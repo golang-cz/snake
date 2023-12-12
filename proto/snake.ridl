@@ -47,4 +47,6 @@ enum ItemType: uint
   - bite
 
 error 100 SnakeNotFound "Snake not found." HTTP 400
-error 101 InvalidTurn "Can't reverse direction." HTTP 400
+error 101 InvalidInput "Invalid input." HTTP 400
+error 200 TurnAbout "Turnabout is not allowed." HTTP 400
+error 201 TurnSameDirection "Duplicated turn. Same direction." HTTP 400

@@ -26,82 +26,11 @@ var (
 
 func NewSnakeServer() *Server {
 	return &Server{
-		lastSnakeId: 3,
-		lastItemId:  5,
 		state: &proto.State{
 			Width:  70,
 			Height: 70,
-			Snakes: map[uint64]*proto.Snake{
-				0: {
-					Id:    0,
-					Name:  "AI",
-					Color: randColor(),
-					Body: []*proto.Square{
-						{X: 10, Y: 20},
-						{X: 10, Y: 21},
-						{X: 11, Y: 21},
-						{X: 12, Y: 21},
-						{X: 13, Y: 21},
-						{X: 14, Y: 21},
-						{X: 14, Y: 22},
-						{X: 14, Y: 23},
-						{X: 14, Y: 24},
-						{X: 14, Y: 25},
-						{X: 13, Y: 25},
-						{X: 12, Y: 25},
-						{X: 11, Y: 25},
-						{X: 11, Y: 26},
-						{X: 11, Y: 27},
-						{X: 11, Y: 28},
-						{X: 11, Y: 29},
-					},
-					Direction: &up,
-				},
-				1: {
-					Id:    1,
-					Name:  "AI",
-					Color: randColor(),
-					Body: []*proto.Square{
-						{X: 50, Y: 44},
-						{X: 50, Y: 43},
-						{X: 50, Y: 42},
-						{X: 50, Y: 41},
-					},
-					Direction: &down,
-				},
-			},
-			Items: map[uint64]*proto.Item{
-				0: {
-					Id:    0,
-					Color: "red",
-					Body:  &proto.Square{X: 40, Y: 66},
-				},
-				1: {
-					Id:    1,
-					Color: "red",
-					Body:  &proto.Square{X: 10, Y: 2},
-				},
-				2: {
-					Id:    2,
-					Color: "red",
-					Body:  &proto.Square{X: 55, Y: 35},
-				},
-				3: {
-					Id:    3,
-					Color: "red",
-					Body:  &proto.Square{X: 50, Y: 49},
-				},
-				4: {
-					Id:    4,
-					Color: "red",
-					Body:  &proto.Square{X: 50, Y: 51},
-				},
-				5: {
-					Id:    5,
-					Color: "red",
-					Body:  &proto.Square{X: 50, Y: 53},
-				},
-			},
+			Snakes: map[uint64]*proto.Snake{},
+			Items:  map[uint64]*proto.Item{},
 		},
 		events: make(chan *proto.Event, 100000),
 		subs:   map[uint64]chan *proto.State{},

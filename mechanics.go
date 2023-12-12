@@ -1,8 +1,31 @@
 package main
 
 import (
+	"math/rand"
+
 	"github.com/golang-cz/snake/proto"
 )
+
+func (s *Server) createSnake(username string) (uint64, error) {
+	s.lastSnakeId++
+
+	randOffset := uint(rand.Intn(10) - rand.Intn(10))
+
+	snakeId := s.lastSnakeId
+	s.state.Snakes[snakeId] = &proto.Snake{
+		Id:    snakeId,
+		Name:  username,
+		Color: randColor(),
+		Body: []*proto.Square{
+			{X: 36, Y: 35 + randOffset},
+			{X: 35, Y: 35 + randOffset},
+			{X: 34, Y: 35 + randOffset},
+		},
+		Direction: &right,
+	}
+
+	return snakeId, nil
+}
 
 func turnSnake(snake *proto.Snake, direction *proto.Direction, buf int) error {
 	lastDirection := *snake.Direction
@@ -12,19 +35,19 @@ func turnSnake(snake *proto.Snake, direction *proto.Direction, buf int) error {
 
 	// Same direction.
 	if lastDirection == *direction {
-		return proto.ErrInvalidTurn
+		return proto.ErrTurnSameDirection
 	}
 
 	// Disallow turnabouts.
 	switch {
 	case lastDirection == proto.Direction_up && *direction == proto.Direction_down:
-		return proto.ErrInvalidTurn
+		return proto.ErrTurnAbout
 	case lastDirection == proto.Direction_down && *direction == proto.Direction_up:
-		return proto.ErrInvalidTurn
+		return proto.ErrTurnAbout
 	case lastDirection == proto.Direction_left && *direction == proto.Direction_right:
-		return proto.ErrInvalidTurn
+		return proto.ErrTurnAbout
 	case lastDirection == proto.Direction_right && *direction == proto.Direction_left:
-		return proto.ErrInvalidTurn
+		return proto.ErrTurnAbout
 	}
 
 	if len(snake.NextDirections) > buf {

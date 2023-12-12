@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image"
 	"math"
 	"strings"
@@ -46,7 +45,7 @@ func (g grid) Neighbours(p image.Point) []image.Point {
 }
 
 func (g grid) isFreeAt(p image.Point) bool {
-	return g.isInBounds(p) && g[p.Y][p.X] != '#'
+	return g.isInBounds(p) && g.get(p) != rune(0)
 }
 
 func (g grid) isInBounds(p image.Point) bool {
@@ -57,10 +56,8 @@ func (g grid) put(p image.Point, c rune) {
 	g[p.Y] = g[p.Y][:p.X] + string(c) + g[p.Y][p.X+1:]
 }
 
-func (g grid) print() {
-	for _, row := range g {
-		fmt.Println(row)
-	}
+func (g grid) get(p image.Point) rune {
+	return rune(g[p.Y][p.X])
 }
 
 func distance(p, q image.Point) float64 {
@@ -68,7 +65,7 @@ func distance(p, q image.Point) float64 {
 	return math.Sqrt(float64(d.X*d.X + d.Y*d.Y))
 }
 
-func SquareToPoint(s *proto.Square) image.Point {
+func squareToPoint(s *proto.Square) image.Point {
 	return image.Point{
 		X: int(s.X),
 		Y: int(s.Y),

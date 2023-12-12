@@ -41,22 +41,7 @@ func (s *Server) CreateSnake(ctx context.Context, username string) (uint64, erro
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.lastSnakeId++
-
-	snakeId := s.lastSnakeId
-	s.state.Snakes[snakeId] = &proto.Snake{
-		Id:    snakeId,
-		Name:  username,
-		Color: randColor(),
-		Body: []*proto.Square{
-			{X: 36, Y: 35},
-			{X: 35, Y: 35},
-			{X: 34, Y: 35},
-		},
-		Direction: &right,
-	}
-
-	return snakeId, nil
+	return s.createSnake(username)
 }
 
 func (s *Server) TurnSnake(ctx context.Context, snakeId uint64, direction *proto.Direction) error {
