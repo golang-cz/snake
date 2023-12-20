@@ -13,7 +13,7 @@
 </script>
 
 <div class="wrapper">
-	<canvas tabindex="1" bind:this={canvas} height={500} width={500}></canvas>
+	<canvas tabindex="1" bind:this={canvas}></canvas>
 </div>
 
 <style>

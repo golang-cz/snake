@@ -1,4 +1,10 @@
-import { Direction, type JoinGameReturn, type SnakeGame, type State } from '$lib/rpc.gen';
+import {
+	Direction,
+	WebrpcError,
+	type JoinGameReturn,
+	type SnakeGame,
+	type State
+} from '$lib/rpc.gen';
 
 const arrowMap: Record<string, Direction> = {
 	ArrowUp: Direction.up,
@@ -18,6 +24,7 @@ export class Game {
 	constructor(ctx: CanvasRenderingContext2D, api: SnakeGame) {
 		this.ctx = ctx;
 		this.api = api;
+		this.onMessageHandler = this.onMessageHandler.bind(this);
 	}
 
 	async start() {
@@ -73,15 +80,19 @@ export class Game {
 	onMessageHandler(message: JoinGameReturn) {
 		const { width, height, snakes, items } = message.state;
 		if (!this.gridRendered) {
+			const pxWidth = width * this.cellSize;
+			const pxHeight = height * this.cellSize;
+			this.ctx.canvas.width = pxWidth;
+			this.ctx.canvas.height = pxHeight;
 			this.gridRendered = true;
-			this.drawGrid(width, height);
+			this.drawGrid(pxWidth, pxHeight);
 		}
 		this.drawSnakes(snakes);
 		this.drawItems(items);
 	}
 
-	onErrorHandler() {
-		console.log('error');
+	onErrorHandler(error: WebrpcError) {
+		console.log(error);
 	}
 
 	handleKeyDown = (e: KeyboardEvent) => {
