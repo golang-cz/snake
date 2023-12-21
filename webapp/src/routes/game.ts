@@ -13,52 +13,59 @@ const arrowMap: Record<string, Direction> = {
 	ArrowRight: Direction.right
 };
 
+interface GameProps {
+	ctx: CanvasRenderingContext2D;
+	api: SnakeGame;
+	username: string;
+}
+
 export class Game {
 	private cellSize = 10;
 
 	private ctx: CanvasRenderingContext2D;
 	private api: SnakeGame;
 	private snakeId: number | null = null;
-	private gridRendered = false;
+	private state: State | null = null;
+	private username: string;
 
-	constructor(ctx: CanvasRenderingContext2D, api: SnakeGame) {
+	constructor({ ctx, api, username }: GameProps) {
 		this.ctx = ctx;
 		this.api = api;
-		this.onMessageHandler = this.onMessageHandler.bind(this);
+		this.username = username;
 	}
 
-	async start() {
+	start = async () => {
 		window.addEventListener('keydown', this.handleKeyDown);
 		this.api.joinGame({
 			onMessage: this.onMessageHandler,
 			onError: this.onErrorHandler
 		});
 		({ snakeId: this.snakeId } = await this.api.createSnake({
-			username: 'test'
+			username: this.username
 		}));
-	}
+	};
 
-	drawSquare(x: number, y: number, color: string) {
+	drawSquare = (x: number, y: number, color: string) => {
 		if (!this.ctx) return;
 		this.ctx.fillStyle = color;
 		this.ctx.fillRect(x * this.cellSize, y * this.cellSize, this.cellSize, this.cellSize);
-	}
+	};
 
-	drawSnakes(snakes: State['snakes']) {
+	drawSnakes = (snakes: State['snakes']) => {
 		for (const snake of Object.values(snakes)) {
 			for (let i = 0; i < snake.body.length; i++) {
 				this.drawSquare(snake.body[i].x, snake.body[i].y, snake.color);
 			}
 		}
-	}
+	};
 
-	drawItems(items: State['items']) {
+	drawItems = (items: State['items']) => {
 		for (const item of Object.values(items)) {
 			this.drawSquare(item.body.x, item.body.y, item.color);
 		}
-	}
+	};
 
-	drawGrid(height: number, width: number) {
+	drawGrid = (height: number, width: number) => {
 		if (!this.ctx) return;
 		this.ctx.fillStyle = '#fff';
 		this.ctx.strokeStyle = '#eee';
@@ -75,25 +82,26 @@ export class Game {
 		}
 
 		this.ctx.stroke();
-	}
+	};
 
-	onMessageHandler(message: JoinGameReturn) {
+	onMessageHandler = (message: JoinGameReturn) => {
 		const { width, height, snakes, items } = message.state;
-		if (!this.gridRendered) {
-			const pxWidth = width * this.cellSize;
-			const pxHeight = height * this.cellSize;
-			this.ctx.canvas.width = pxWidth;
-			this.ctx.canvas.height = pxHeight;
-			this.gridRendered = true;
-			this.drawGrid(pxWidth, pxHeight);
-		}
+		// if (!this.state) {
+		this.state = message.state;
+		const pxWidth = width * this.cellSize;
+		const pxHeight = height * this.cellSize;
+		this.ctx.canvas.width = pxWidth;
+		this.ctx.canvas.height = pxHeight;
+		this.drawGrid(pxWidth, pxHeight);
 		this.drawSnakes(snakes);
 		this.drawItems(items);
-	}
+		// } else {
+		// }
+	};
 
-	onErrorHandler(error: WebrpcError) {
+	onErrorHandler = (error: WebrpcError) => {
 		console.log(error);
-	}
+	};
 
 	handleKeyDown = (e: KeyboardEvent) => {
 		const key = e.key;

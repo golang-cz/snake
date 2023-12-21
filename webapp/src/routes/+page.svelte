@@ -7,7 +7,7 @@
 	const api = new SnakeGame('http://localhost:5252', fetch);
 
 	$effect(() => {
-		const game = new Game(canvas.getContext('2d')!, api);
+		const game = new Game({ ctx: canvas.getContext('2d')!, api, username: 'hiss-terical' });
 		game.start();
 	});
 </script>
