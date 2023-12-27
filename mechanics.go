@@ -7,22 +7,30 @@ import (
 )
 
 func (s *Server) createSnake(username string) (uint64, error) {
-	s.lastSnakeId++
-
 	randOffset := uint(rand.Intn(10) - rand.Intn(10))
 
 	snakeId := s.lastSnakeId
-	s.state.Snakes[snakeId] = &proto.Snake{
+	snake := &proto.Snake{
 		Id:    snakeId,
 		Name:  username,
 		Color: randColor(),
-		Body: []*proto.Square{
+		Body: []*proto.Coordinate{
 			{X: 36, Y: 35 + randOffset},
 			{X: 35, Y: 35 + randOffset},
 			{X: 34, Y: 35 + randOffset},
 		},
-		Direction: &right,
+		Direction: &Right,
 	}
+
+	s.state.Snakes[snakeId] = snake
+
+	u := &proto.Update{
+		Diffs: generateDiffFromBody(snake),
+	}
+
+	s.sendUpdate(u)
+
+	s.lastSnakeId++
 
 	return snakeId, nil
 }
@@ -57,4 +65,19 @@ func turnSnake(snake *proto.Snake, direction *proto.Direction, buf int) error {
 	}
 
 	return nil
+}
+
+func generateDiffFromBody(s *proto.Snake) (diffs []*proto.Diff) {
+	for _, bodyPart := range s.Body {
+		diff := &proto.Diff{
+			X:     bodyPart.X,
+			Y:     bodyPart.Y,
+			Color: s.Color,
+			Add:   true,
+		}
+
+		diffs = append(diffs, diff)
+	}
+
+	return diffs
 }

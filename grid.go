@@ -3,6 +3,9 @@ package main
 import (
 	"image"
 	"math"
+	"os"
+	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/golang-cz/snake/proto"
@@ -11,6 +14,7 @@ import (
 type grid []string
 
 func (g grid) String() string {
+	clearTerminal()
 	var b strings.Builder
 	b.WriteByte('\n')
 	b.WriteString(strings.Repeat("▮", len(g)+2))
@@ -65,9 +69,22 @@ func distance(p, q image.Point) float64 {
 	return math.Sqrt(float64(d.X*d.X + d.Y*d.Y))
 }
 
-func squareToPoint(s *proto.Square) image.Point {
+func squareToPoint(s *proto.Coordinate) image.Point {
 	return image.Point{
 		X: int(s.X),
 		Y: int(s.Y),
 	}
+}
+
+func clearTerminal() {
+	var cmd *exec.Cmd
+
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", "cls")
+	} else {
+		cmd = exec.Command("clear")
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }

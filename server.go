@@ -10,7 +10,7 @@ type Server struct {
 	mu     sync.Mutex
 	state  *proto.State
 	events chan *proto.Event
-	subs   map[uint64]chan *proto.State
+	subs   map[uint64]chan *proto.Update
 
 	lastSnakeId uint64
 	lastItemId  uint64
@@ -18,10 +18,10 @@ type Server struct {
 }
 
 var (
-	down  = proto.Direction_down
-	up    = proto.Direction_up
-	left  = proto.Direction_left
-	right = proto.Direction_right
+	Left  = proto.Direction_left
+	Right = proto.Direction_right
+	Up    = proto.Direction_up
+	Down  = proto.Direction_down
 )
 
 func NewSnakeServer() *Server {
@@ -33,6 +33,6 @@ func NewSnakeServer() *Server {
 			Items:  map[uint64]*proto.Item{},
 		},
 		events: make(chan *proto.Event, 100000),
-		subs:   map[uint64]chan *proto.State{},
+		subs:   map[uint64]chan *proto.Update{},
 	}
 }

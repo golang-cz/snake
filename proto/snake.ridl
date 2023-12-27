@@ -4,9 +4,19 @@ name = snake
 version = v1.0.0
 
 service SnakeGame
-  - JoinGame() => stream (state: State, event: Event)
+  - JoinGame() => stream (update: Update, event: Event)
   - CreateSnake(username: string) => (snakeId: uint64)
   - TurnSnake(snakeId: uint64, direction: Direction)
+
+struct Update
+  - diffs: []Diff
+  - state: State
+
+struct Diff
+  - x: uint
+  - y: uint
+  - color: string
+  - add: bool
 
 struct State
   - width: uint
@@ -18,7 +28,7 @@ struct Snake
   - id: uint64
   - name: string
   - color: string
-  - body: []Square
+  - body: []Coordinate
   - direction: Direction
   - nextDirections: []Direction
   - length: int
@@ -29,11 +39,11 @@ struct Item
   - id: uint64
   - color: string
   - type: ItemType
-  - body: Square
+  - coordinate: Coordinate
 
 struct Event
 
-struct Square
+struct Coordinate
   - x: uint
   - y: uint
 

@@ -12,6 +12,6 @@ func randColor() string {
 }
 
 func randDirection() *proto.Direction {
-	directions := []*proto.Direction{&left, &up, &right, &down}
+	directions := []*proto.Direction{&Left, &Up, &Right, &Down}
 	return directions[rand.Intn(len(directions))]
 }

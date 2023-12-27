@@ -2,7 +2,7 @@ package main
 
 import "github.com/golang-cz/snake/proto"
 
-func (s *Server) subscribe(c chan *proto.State) (*proto.State, uint64) {
+func (s *Server) subscribe(c chan *proto.Update) (*proto.Update, uint64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -10,7 +10,11 @@ func (s *Server) subscribe(c chan *proto.State) (*proto.State, uint64) {
 	s.subs[id] = c
 	s.lastSubId++
 
-	return s.state, id
+	u := &proto.Update{
+		State: s.state,
+	}
+
+	return u, id
 }
 
 func (s *Server) unsubscribe(subscriptionId uint64) {
