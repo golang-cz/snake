@@ -8,13 +8,13 @@ import (
 )
 
 func (s *Server) JoinGame(ctx context.Context, stream proto.JoinGameStreamWriter) error {
-	events := make(chan *proto.State, 10)
+	events := make(chan *proto.Update, 10)
 
-	state, subscriptionId := s.subscribe(events)
+	update, subscriptionId := s.subscribe(events)
 	defer s.unsubscribe(subscriptionId)
 
 	// Send initial state.
-	if err := stream.Write(state, nil); err != nil {
+	if err := stream.Write(update, nil); err != nil {
 		return err
 	}
 
@@ -29,8 +29,8 @@ func (s *Server) JoinGame(ctx context.Context, stream proto.JoinGameStreamWriter
 				return proto.ErrWebrpcInternalError
 			}
 
-		case state := <-events:
-			if err := stream.Write(state, nil); err != nil {
+		case update := <-events:
+			if err := stream.Write(update, nil); err != nil {
 				return err
 			}
 		}

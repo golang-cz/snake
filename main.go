@@ -6,22 +6,32 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+
 	"github.com/golang-cz/snake/proto"
 )
 
+const (
+	PORT                 = 5252
+	NumOfAISnakes        = 3
+	FoodFromDeadSnake    = 3
+	GameTickTime         = 75 * time.Millisecond
+	NumOfStartingFood    = 3
+	FoodGenerateInterval = 2 * time.Second
+	AISnakeRespawnTime   = 5 * time.Second
+)
+
 func main() {
-	port := 5252
-	slog.Info(fmt.Sprintf("serving at http://localhost:%v", port))
+	slog.Info(fmt.Sprintf("serving at http://localhost:%v", PORT))
 
 	rpc := NewSnakeServer()
 	go rpc.Run(context.TODO())
 
-	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", port), rpc.Router())
-	if err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", PORT), rpc.Router()); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -29,8 +39,8 @@ func main() {
 func (s *Server) Router() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	//r.Use(requestDebugger)
-	//r.Use(middleware.Recoverer)
+	// r.Use(requestDebugger)
+	// r.Use(middleware.Recoverer)
 
 	cors := cors.New(cors.Options{
 		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
@@ -56,16 +66,17 @@ func (s *Server) Router() http.Handler {
 
 func requestDebugger(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		slog.Info(fmt.Sprintf("req started"),
+		slog.Info("req started",
 			slog.String("url", fmt.Sprintf("%v %v", r.Method, r.URL.String())))
 
 		defer func() {
-			slog.Info(fmt.Sprintf("req finished"),
+			slog.Info("req finished",
 				slog.String("url", fmt.Sprintf("%v %v", r.Method, r.URL.String())),
 			)
 		}()
 
 		next.ServeHTTP(w, r)
 	}
+
 	return http.HandlerFunc(fn)
 }

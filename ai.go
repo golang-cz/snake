@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/fzipp/astar"
+
 	"github.com/golang-cz/snake/proto"
 )
 
@@ -15,23 +16,41 @@ func (s *Server) createFood() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.state.Items[s.lastItemId] = &proto.Item{
+	bite := proto.ItemType_bite
+	item := &proto.Item{
 		Id:    s.lastItemId,
 		Color: "red",
-		Body: &proto.Square{
+		Coordinate: &proto.Coordinate{
 			X: uint(rand.Intn(int(s.state.Width))),
 			Y: uint(rand.Intn(int(s.state.Height))),
 		},
+		Type: &bite,
 	}
+
+	s.state.Items[s.lastItemId] = item
 	s.lastItemId++
+
+	u := &proto.Update{
+		Diffs: []*proto.Diff{
+			{
+				X:     item.Coordinate.X,
+				Y:     item.Coordinate.Y,
+				Color: item.Color,
+				Add:   true,
+			},
+		},
+	}
+
+	s.sendUpdate(u)
 }
 
 func (s *Server) generateFood() {
-	s.createFood()
-	s.createFood()
-	s.createFood()
+	for i := 0; i < NumOfStartingFood; i++ {
+		s.createFood()
+	}
+
 	for {
-		<-time.After(2 * time.Second)
+		<-time.After(FoodGenerateInterval)
 		s.createFood()
 	}
 }
@@ -43,7 +62,7 @@ func (s *Server) currentGrid() grid {
 	}
 
 	for _, item := range s.state.Items {
-		grid.put(image.Point{X: int(item.Body.X), Y: int(item.Body.Y)}, '*')
+		grid.put(image.Point{X: int(item.Coordinate.X), Y: int(item.Coordinate.Y)}, '*')
 	}
 
 	for _, snake := range s.state.Snakes {
@@ -58,7 +77,7 @@ func (s *Server) currentGrid() grid {
 func (s *Server) generateSnakeTurns(grid grid) {
 	// Turn "AI" snakes to the closes food using A* algorithm.
 	for _, snake := range s.state.Snakes {
-		if snake.Name != "AI" {
+		if !strings.Contains(snake.Name, "AI") {
 			continue
 		}
 
@@ -75,7 +94,7 @@ func (s *Server) generateSnakeTurns(grid grid) {
 		shortestPathLen := math.MaxInt
 
 		for _, item := range s.state.Items {
-			food := squareToPoint(item.Body)
+			food := squareToPoint(item.Coordinate)
 
 			path := astar.FindPath[image.Point](grid, snakeHead, food, distance, distance)
 			if len(path) > 1 && len(path) < shortestPathLen {
@@ -97,20 +116,20 @@ func (s *Server) generateSnakeTurns(grid grid) {
 
 			switch {
 			case snakeHead.X < nextSquare.X:
-				if turnSnake(snake, &right, 0) == proto.ErrTurnAbout {
-					turnSnake(snake, &up, 0)
+				if turnSnake(snake, &Right, 0) == proto.ErrTurnAbout {
+					turnSnake(snake, &Up, 0)
 				}
 			case snakeHead.X > nextSquare.X:
-				if turnSnake(snake, &left, 0) == proto.ErrTurnAbout {
-					turnSnake(snake, &down, 0)
+				if turnSnake(snake, &Left, 0) == proto.ErrTurnAbout {
+					turnSnake(snake, &Down, 0)
 				}
 			case snakeHead.Y < nextSquare.Y:
-				if turnSnake(snake, &down, 0) == proto.ErrTurnAbout {
-					turnSnake(snake, &left, 0)
+				if turnSnake(snake, &Down, 0) == proto.ErrTurnAbout {
+					turnSnake(snake, &Left, 0)
 				}
 			case snakeHead.Y > nextSquare.Y:
-				if turnSnake(snake, &up, 0) == proto.ErrTurnAbout {
-					turnSnake(snake, &right, 0)
+				if turnSnake(snake, &Up, 0) == proto.ErrTurnAbout {
+					turnSnake(snake, &Right, 0)
 				}
 			}
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"image"
+	"strings"
 	"time"
 
 	"github.com/golang-cz/snake/proto"
@@ -11,25 +12,30 @@ import (
 
 func (s *Server) Run(ctx context.Context) error {
 	go s.generateFood()
+	go s.generateAISnakes()
 
-	for i := 0; i < 3; i++ {
-		s.createSnake("AI")
-	}
-
-	ticker := time.NewTicker(75 * time.Millisecond)
+	ticker := time.NewTicker(GameTickTime)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			if err := s.gameTick(); err != nil {
-				return fmt.Errorf("advancing the game: %w", err)
-			}
-		}
+	for range ticker.C {
+		// if err := s.gameTick(); err != nil {
+		// 	return fmt.Errorf("advancing the game: %w", err)
+		// }
+
+		s.gameTick()
+	}
+
+	return nil
+}
+
+func (s *Server) generateAISnakes() {
+	for i := 0; i < NumOfAISnakes; i++ {
+		time.Sleep(time.Second)
+		go s.createSnake(fmt.Sprintf("AI%v", i))
 	}
 }
 
-func (s *Server) gameTick() error {
+func (s *Server) gameTick() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -38,9 +44,14 @@ func (s *Server) gameTick() error {
 
 	s.generateSnakeTurns(grid)
 
+	u := &proto.Update{
+		Diffs: []*proto.Diff{},
+		// State: s.state,
+	}
+
 	// Move snakes.
 	for _, snake := range s.state.Snakes {
-		next := &proto.Square{}
+		next := &proto.Coordinate{}
 
 		if len(snake.NextDirections) > 0 {
 			snake.Direction = snake.NextDirections[0]
@@ -69,66 +80,119 @@ func (s *Server) gameTick() error {
 			// Move snake's head.
 			grid.put(nextPoint, snakeRune(snake.Id))
 
-			snake.Body = append([]*proto.Square{next}, snake.Body...)
+			snake.Body = append([]*proto.Coordinate{next}, snake.Body...)
 
 			// Remove food.
 			for _, item := range s.state.Items {
-				if item.Body.X == next.X && item.Body.Y == next.Y {
+				if item.Coordinate.X == next.X && item.Coordinate.Y == next.Y {
 					delete(s.state.Items, item.Id)
 				}
 			}
 
+			diff := &proto.Diff{
+				X:     next.X,
+				Y:     next.Y,
+				Color: snake.Color,
+				Add:   true,
+			}
+
+			u.Diffs = append(u.Diffs, diff)
+
+			snake.Length = len(snake.Body)
+
 		case ' ', '.', snakeRune(snake.Id):
 			// Move snake's head & remove tail.
-			tailPoint := squareToPoint(snake.Body[len(snake.Body)-1])
+			tail := snake.Body[len(snake.Body)-1]
+			tailPoint := squareToPoint(tail)
 			grid.put(tailPoint, ' ')
 			grid.put(nextPoint, snakeRune(snake.Id))
 
-			snake.Body = append([]*proto.Square{next}, snake.Body[:len(snake.Body)-1]...)
+			headDiff := &proto.Diff{
+				X:     next.X,
+				Y:     next.Y,
+				Color: snake.Color,
+				Add:   true,
+			}
+
+			tailDiff := &proto.Diff{
+				X:   tail.X,
+				Y:   tail.Y,
+				Add: false,
+			}
+
+			u.Diffs = append(u.Diffs, headDiff)
+			u.Diffs = append(u.Diffs, tailDiff)
+
+			snake.Body = append([]*proto.Coordinate{next}, snake.Body[:len(snake.Body)-1]...)
 
 		default:
 			// Crashed into another snake.
+			name := snake.Name
 			delete(s.state.Snakes, snake.Id)
 
-			// Create food from snake's body.
-			for i, square := range snake.Body {
-				if i%2 == 0 {
-					s.state.Items[s.lastItemId] = &proto.Item{
-						Id:    s.lastItemId,
-						Color: "red",
-						Body:  square,
-					}
-					s.lastItemId++
+			bite := proto.ItemType_bite
+			for i, bodyPart := range snake.Body {
+				diff := &proto.Diff{
+					X: bodyPart.X,
+					Y: bodyPart.Y,
 				}
+
+				// Create food from snake's body.
+				if i%FoodFromDeadSnake == 0 {
+					item := &proto.Item{
+						Id:         s.lastItemId,
+						Color:      "red",
+						Coordinate: bodyPart,
+						Type:       &bite,
+					}
+
+					s.state.Items[s.lastItemId] = item
+					s.lastItemId++
+
+					diff.Color = item.Color
+					diff.Add = true
+				}
+
+				u.Diffs = append(u.Diffs, diff)
 			}
 
 			// Reborn AI.
-			if snake.Name == "AI" {
+			if strings.Contains(snake.Name, "AI") {
 				go func() {
-					<-time.After(10 * time.Second)
-					s.createSnake("AI")
+					<-time.After(AISnakeRespawnTime)
+					s.createSnake(name)
 				}()
 			}
-
 		}
 	}
 
-	return s.sendState(s.state)
+	// Generate bite, if snakes ate all bites
+	// bites := 0
+	// for i := uint64(0); int(i) < len(s.state.Items) && bites == 0; i++ {
+	// 	if s.state.Items[i].Type != nil && *s.state.Items[i].Type == proto.ItemType_bite {
+	// 		bites++
+	// 	}
+	// }
+	//
+	// if bites == 0 {
+	// 	go s.createFood()
+	// }
+	//
+	if len(u.Diffs) != 0 {
+		s.sendUpdate(u)
+	}
 }
 
-// TODO: We send the whole state on each update. Optimize to send events (diffs) only.
-func (s *Server) sendState(state *proto.State) error {
+func (s *Server) sendUpdate(state *proto.Update) {
 	for _, sub := range s.subs {
 		sub := sub
 		go func() {
 			sub <- state
 		}()
 	}
-	return nil
 }
 
-var runes = []rune{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'}
-
+// Get letter from A to Z
 func snakeRune(snakeId uint64) rune {
-	return runes[int(snakeId)%len(runes)]
+	return rune((snakeId % 26) + 65)
 }
